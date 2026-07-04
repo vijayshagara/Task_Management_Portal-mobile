@@ -1,20 +1,49 @@
+import { useEffect } from 'react';
+import { Platform, StatusBar as RNStatusBar } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider, useDispatch } from 'react-redux';
+import { store } from './src/store';
+import RootNavigator from './src/navigation/RootNavigator';
+import LoadingView from './src/components/LoadingView';
+import { loadAuth } from './src/store/authStorage';
+import { setAuthSession, finishBootstrap } from './src/features/auth/authSlice';
+import { useSelector } from 'react-redux';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+function Bootstrap({ children }) {
+  const dispatch = useDispatch();
+  const bootstrapping = useSelector((s) => s.auth.bootstrapping);
+
+  useEffect(() => {
+    loadAuth()
+      .then(({ token, user }) => {
+        if (token && user) dispatch(setAuthSession({ token, user }));
+        else dispatch(finishBootstrap());
+      })
+      .catch(() => dispatch(finishBootstrap()));
+  }, [dispatch]);
+
+  if (bootstrapping) return <LoadingView message="Starting app…" />;
+  return children;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default function App() {
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      RNStatusBar.setTranslucent(false);
+      RNStatusBar.setBackgroundColor('#ffffff');
+      RNStatusBar.setBarStyle('dark-content');
+    }
+  }, []);
+
+  return (
+    <Provider store={store}>
+      <SafeAreaProvider>
+        <Bootstrap>
+          <RootNavigator />
+        </Bootstrap>
+        <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
+      </SafeAreaProvider>
+    </Provider>
+  );
+}

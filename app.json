@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Task_Management_Portal-mobile",
-    "slug": "Task_Management_Portal-mobile",
+    "name": "Dairy Farmer Portal",
+    "slug": "dairy-farmer-portal",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,15 +10,32 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.dairyfarmers.portal",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#ffffff",
+      "translucent": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "95969a30-efe6-4ffd-a9f9-31e1414c1b77"
+      }
+    },
+    "owner": "vijayshagara"
   }
 }
