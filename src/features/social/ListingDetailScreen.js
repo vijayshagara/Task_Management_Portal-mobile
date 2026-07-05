@@ -1,22 +1,27 @@
-import { useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet, Image, Alert } from 'react-native';
+import { useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchListing, contactSeller } from './marketplaceSlice';
 import { fetchConversations } from './messagesSlice';
 import { getSocialMediaUrl } from '../../utils/socialHelpers';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
 
 export default function ListingDetailScreen({ navigation, route }) {
   const { id } = route.params;
   const dispatch = useDispatch();
-  const { selected: listing } = useSelector((s) => s.marketplace);
+  const { selected: listing, detailLoading } = useSelector((s) => s.marketplace);
 
   useEffect(() => {
     dispatch(fetchListing(id));
   }, [dispatch, id]);
+
+  const load = useCallback(() => dispatch(fetchListing(id)).unwrap(), [dispatch, id]);
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const handleContact = async () => {
     try {
@@ -28,11 +33,15 @@ export default function ListingDetailScreen({ navigation, route }) {
     }
   };
 
-  if (!listing) return <LoadingView message="Loading listing…" />;
+  if (detailLoading || !listing || listing.id !== id) return <LoadingView message="Loading listing…" />;
 
   return (
     <Screen title={listing.title} subtitle={`${listing.listingType} · ${listing.location || '—'}`}>
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+      <RefreshableScrollView
+        contentContainerStyle={{ padding: spacing.md }}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      >
         {listing.photos?.map((photo) => (
           <Image key={photo} source={{ uri: getSocialMediaUrl(photo) }} style={styles.img} />
         ))}
@@ -45,7 +54,7 @@ export default function ListingDetailScreen({ navigation, route }) {
         </View>
         <Text style={styles.seller}>Seller: {listing.seller?.name} ({listing.seller?.profile?.farmName})</Text>
         <Button title="Chat with Seller" onPress={handleContact} style={{ marginTop: spacing.lg }} />
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

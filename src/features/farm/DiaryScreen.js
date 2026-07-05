@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, Alert } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import { fetchDiary, createDiary } from './farmSlice';
 import { fetchCows } from '../cows/cowSlice';
 import { colors, spacing } from '../../theme';
@@ -11,7 +14,7 @@ import { enqueueOfflineAction } from '../../utils/offlineQueue';
 
 export default function DiaryScreen() {
   const dispatch = useDispatch();
-  const { diary } = useSelector((s) => s.farm);
+  const { diary, loading } = useSelector((s) => s.farm);
   const cows = useSelector((s) => s.cows.items);
   const [form, setForm] = useState({
     entryDate: new Date().toISOString().split('T')[0], content: '', weather: '', feedNotes: '', cowId: '',
@@ -22,6 +25,12 @@ export default function DiaryScreen() {
     dispatch(fetchDiary());
     dispatch(fetchCows());
   }, [dispatch]);
+
+  const load = useCallback(
+    () => Promise.all([dispatch(fetchDiary()).unwrap(), dispatch(fetchCows()).unwrap()]),
+    [dispatch],
+  );
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
     const payload = { ...form, cowId: form.cowId || null };
@@ -34,9 +43,15 @@ export default function DiaryScreen() {
     }
   };
 
+  if (loading && !diary.length) return <LoadingView message="Loading diary…" />;
+
   return (
     <Screen title="Farm Diary" subtitle="Daily farm logs">
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+      <RefreshableScrollView
+        contentContainerStyle={{ padding: spacing.md }}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      >
         <Input value={form.entryDate} onChangeText={(v) => set('entryDate', v)} placeholder="Date (YYYY-MM-DD)" />
         <Input value={form.weather} onChangeText={(v) => set('weather', v)} placeholder="Weather" />
         <Input value={form.feedNotes} onChangeText={(v) => set('feedNotes', v)} placeholder="Feed notes" />
@@ -51,7 +66,7 @@ export default function DiaryScreen() {
             <Text>{entry.content}</Text>
           </View>
         ))}
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

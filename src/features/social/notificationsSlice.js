@@ -64,8 +64,15 @@ const notificationsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchNotifications.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
+        state.loading = false;
         state.items = action.payload.items;
+      })
+      .addCase(fetchNotifications.rejected, (state) => {
+        state.loading = false;
       })
       .addCase(fetchUnreadCount.fulfilled, (state, action) => {
         state.unreadCount = action.payload;
@@ -74,8 +81,15 @@ const notificationsSlice = createSlice({
         state.unreadCount = 0;
         state.items = state.items.map((n) => ({ ...n, isRead: true }));
       })
+      .addCase(fetchExplore.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(fetchExplore.fulfilled, (state, action) => {
+        state.loading = false;
         state.explore = action.payload;
+      })
+      .addCase(fetchExplore.rejected, (state) => {
+        state.loading = false;
       })
       .addCase(globalSearch.fulfilled, (state, action) => {
         state.searchResults = action.payload;

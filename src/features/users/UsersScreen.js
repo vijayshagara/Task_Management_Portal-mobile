@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, Alert } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUsers, addUser, deleteUser } from './userSlice';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
@@ -17,6 +19,9 @@ export default function UsersScreen() {
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
+
+  const load = useCallback(() => dispatch(fetchUsers()).unwrap(), [dispatch]);
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
     try {
@@ -40,9 +45,11 @@ export default function UsersScreen() {
           <Button title="Create User" onPress={submit} />
         </View>
       )}
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.title}>{item.name}</Text>

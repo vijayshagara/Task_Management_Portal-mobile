@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
-import { FlatList, View, Text, StyleSheet } from 'react-native';
+import { useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchNotifications, markAllRead } from './notificationsSlice';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import EmptyState from '../../components/EmptyState';
 import { colors, spacing } from '../../theme';
 
@@ -16,13 +18,21 @@ export default function NotificationsScreen() {
     dispatch(markAllRead());
   }, [dispatch]);
 
+  const load = useCallback(
+    () => Promise.all([dispatch(fetchNotifications()).unwrap(), dispatch(markAllRead()).unwrap()]),
+    [dispatch],
+  );
+  const { refreshing, onRefresh } = useRefresh(load);
+
   if (loading && !items.length) return <LoadingView message="Loading notifications…" />;
 
   return (
     <Screen title="Notifications" subtitle="Likes, comments, follows & more">
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={<EmptyState title="No notifications" message="Activity from farmers will show here" />}
         renderItem={({ item }) => (
           <View style={[styles.item, !item.readAt && styles.unread]}>

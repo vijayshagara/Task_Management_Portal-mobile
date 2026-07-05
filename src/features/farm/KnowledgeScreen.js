@@ -1,19 +1,31 @@
-import { useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
+import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import { fetchKnowledge } from './farmSlice';
 import { colors, spacing } from '../../theme';
 
 export default function KnowledgeScreen() {
   const dispatch = useDispatch();
-  const { knowledge } = useSelector((s) => s.farm);
+  const { knowledge, loading } = useSelector((s) => s.farm);
 
   useEffect(() => { dispatch(fetchKnowledge({})); }, [dispatch]);
 
+  const load = useCallback(() => dispatch(fetchKnowledge({})).unwrap(), [dispatch]);
+  const { refreshing, onRefresh } = useRefresh(load);
+
+  if (loading && !knowledge.length) return <LoadingView message="Loading articles…" />;
+
   return (
     <Screen title="Knowledge Base" subtitle="Farmer guides and tips">
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+      <RefreshableScrollView
+        contentContainerStyle={{ padding: spacing.md }}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      >
         {knowledge.map((a) => (
           <View key={a.id} style={styles.card}>
             <Text style={styles.title}>{a.title} {a.isVerified ? '✓' : ''}</Text>
@@ -22,7 +34,7 @@ export default function KnowledgeScreen() {
             <Text style={styles.votes}>👍 {a.upvotes}</Text>
           </View>
         ))}
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

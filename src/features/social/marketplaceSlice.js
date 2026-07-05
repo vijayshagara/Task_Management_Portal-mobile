@@ -46,6 +46,7 @@ const marketplaceSlice = createSlice({
     items: [],
     selected: null,
     loading: false,
+    detailLoading: false,
     creating: false,
     page: 1,
     totalPages: 1,
@@ -67,8 +68,16 @@ const marketplaceSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchListing.pending, (state) => {
+        state.detailLoading = true;
+        state.selected = null;
+      })
       .addCase(fetchListing.fulfilled, (state, action) => {
+        state.detailLoading = false;
         state.selected = action.payload;
+      })
+      .addCase(fetchListing.rejected, (state) => {
+        state.detailLoading = false;
       })
       .addCase(createListing.fulfilled, (state, action) => {
         state.items.unshift(action.payload);

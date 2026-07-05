@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
-import { FlatList, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchConversations } from './messagesSlice';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import EmptyState from '../../components/EmptyState';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
@@ -18,13 +20,18 @@ export default function ConversationsScreen({ navigation }) {
     return unsub;
   }, [dispatch, navigation]);
 
+  const load = useCallback(() => dispatch(fetchConversations()).unwrap(), [dispatch]);
+  const { refreshing, onRefresh } = useRefresh(load);
+
   if (loading && !conversations.length) return <LoadingView message="Loading messages…" />;
 
   return (
     <Screen title="Messages" subtitle="Chat with farmers and buyers">
-      <FlatList
+      <RefreshableFlatList
         data={conversations}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.empty}>
             <EmptyState

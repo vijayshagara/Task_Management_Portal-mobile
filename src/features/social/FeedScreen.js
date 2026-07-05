@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
-import { FlatList, View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker';
 import { fetchFeed, createPost, likePost, unlikePost, fetchStories } from './feedSlice';
 import { fetchCows } from '../cows/cowSlice';
 import PostCard from './components/PostCard';
 import Screen from '../../components/Screen';
-import LoadingView from '../../components/LoadingView';
+import LoadingView, { LoadingFooter } from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { getSocialMediaUrl } from '../../utils/socialHelpers';
@@ -27,12 +29,18 @@ export default function FeedScreen({ navigation }) {
     dispatch(fetchCows());
   }, [dispatch]);
 
+  const load = useCallback(
+    () => Promise.all([dispatch(fetchFeed({ page: 1 })).unwrap(), dispatch(fetchStories()).unwrap()]),
+    [dispatch],
+  );
+  const { refreshing, onRefresh } = useRefresh(load);
+
   const loadMore = () => {
     if (page < totalPages && !loading) dispatch(fetchFeed({ page: page + 1 }));
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (!result.canceled) setImage(result.assets[0]);
   };
 
@@ -93,9 +101,11 @@ export default function FeedScreen({ navigation }) {
         </View>
       )}
 
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item }) => (
           <PostCard
             post={item}
@@ -106,7 +116,7 @@ export default function FeedScreen({ navigation }) {
         )}
         onEndReached={loadMore}
         onEndReachedThreshold={0.3}
-        ListFooterComponent={loading ? <LoadingView message="Loading more…" /> : null}
+        ListFooterComponent={loading && items.length ? <LoadingFooter message="Loading more…" /> : null}
       />
     </Screen>
   );

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, Alert } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchMyProfile, fetchProfile, fetchUserPosts, followUser, unfollowUser, updateProfile, clearViewedProfile,
@@ -9,6 +9,8 @@ import { startConversation } from './messagesSlice';
 import PostCard from './components/PostCard';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
@@ -44,6 +46,15 @@ export default function ProfileScreen({ navigation, route }) {
       });
     }
   }, [profile]);
+
+  const load = useCallback(() => {
+    if (isOwnProfile) return dispatch(fetchMyProfile()).unwrap();
+    return Promise.all([
+      dispatch(fetchProfile(userId)).unwrap(),
+      dispatch(fetchUserPosts(userId)).unwrap(),
+    ]);
+  }, [dispatch, isOwnProfile, userId]);
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const handleMessage = async () => {
     try {
@@ -86,7 +97,7 @@ export default function ProfileScreen({ navigation, route }) {
         )
       }
     >
-      <ScrollView>
+      <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh}>
         <View style={styles.card}>
           <View style={styles.avatarLg}><Text style={styles.avatarLgText}>{profile?.name?.charAt(0)}</Text></View>
           <Text style={styles.name}>{profile?.name}</Text>
@@ -112,7 +123,7 @@ export default function ProfileScreen({ navigation, route }) {
         {!isOwnProfile && userPosts.map((post) => (
           <PostCard key={post.id} post={post} navigation={navigation} onLike={(id) => dispatch(likePost(id))} onUnlike={(id) => dispatch(unlikePost(id))} />
         ))}
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

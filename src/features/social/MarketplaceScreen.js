@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
-import { FlatList, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchListings } from './marketplaceSlice';
 import { getSocialMediaUrl } from '../../utils/socialHelpers';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import EmptyState from '../../components/EmptyState';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
@@ -17,6 +19,9 @@ export default function MarketplaceScreen({ navigation }) {
     dispatch(fetchListings());
   }, [dispatch]);
 
+  const load = useCallback(() => dispatch(fetchListings()).unwrap(), [dispatch]);
+  const { refreshing, onRefresh } = useRefresh(load);
+
   if (loading && !items.length) return <LoadingView message="Loading marketplace…" />;
 
   return (
@@ -25,9 +30,11 @@ export default function MarketplaceScreen({ navigation }) {
       subtitle="Buy & sell livestock"
       action={<Button title="Sell" onPress={() => navigation.navigate('CreateListing')} style={{ paddingVertical: 8, minHeight: 36 }} />}
     >
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         numColumns={2}
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.list}

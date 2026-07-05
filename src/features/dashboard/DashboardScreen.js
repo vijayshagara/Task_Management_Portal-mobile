@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAnalytics, fetchHealthInsights } from '../farm/farmSlice';
 import { fetchCows } from '../cows/cowSlice';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import { colors, spacing } from '../../theme';
 
 function StatCard({ label, value, color, onPress }) {
@@ -27,13 +29,27 @@ export default function DashboardScreen({ navigation }) {
     dispatch(fetchCows());
   }, [dispatch]);
 
+  const load = useCallback(
+    () => Promise.all([
+      dispatch(fetchAnalytics()).unwrap(),
+      dispatch(fetchHealthInsights()).unwrap(),
+      dispatch(fetchCows()).unwrap(),
+    ]),
+    [dispatch],
+  );
+  const { refreshing, onRefresh } = useRefresh(load);
+
   if (loading && !analytics) return <LoadingView message="Loading dashboard…" />;
 
   const atRisk = healthInsights.filter((h) => h.score < 70);
 
   return (
     <Screen title={`Hello, ${user?.name?.split(' ')[0] || 'Farmer'}`} subtitle="Smart farm overview">
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+      <RefreshableScrollView
+        contentContainerStyle={{ padding: spacing.md }}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      >
         <View style={styles.grid}>
           <StatCard label="Cows" value={analytics?.cowCount ?? 0} color={colors.primary} onPress={() => navigation.navigate('Cows')} />
           <StatCard label="Milk (L)" value={(analytics?.milkTotal ?? 0).toFixed(0)} color="#0277BD" onPress={() => navigation.navigate('Milk')} />
@@ -49,7 +65,7 @@ export default function DashboardScreen({ navigation }) {
             ))}
           </View>
         )}
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

@@ -61,28 +61,37 @@ const farmSlice = createSlice({
   initialState: {
     diary: [], milk: [], milkTrends: [], vaccinations: [], pregnancies: [],
     collections: [], knowledge: [], devices: [], analytics: null, healthInsights: [],
-    loading: false, error: null,
+    loading: false, loadingCount: 0, error: null,
   },
   reducers: {},
   extraReducers: (builder) => {
+    const startFetch = (s) => {
+      s.loadingCount += 1;
+      s.loading = s.loadingCount > 0;
+    };
+    const endFetch = (s) => {
+      s.loadingCount = Math.max(0, s.loadingCount - 1);
+      s.loading = s.loadingCount > 0;
+    };
+
     builder
-      .addCase(fetchDiary.fulfilled, (s, a) => { s.loading = false; s.diary = a.payload; })
+      .addCase(fetchDiary.fulfilled, (s, a) => { endFetch(s); s.diary = a.payload; })
       .addCase(createDiary.fulfilled, (s, a) => { s.diary.unshift(a.payload); })
-      .addCase(fetchMilk.fulfilled, (s, a) => { s.loading = false; s.milk = a.payload; })
+      .addCase(fetchMilk.fulfilled, (s, a) => { endFetch(s); s.milk = a.payload; })
       .addCase(createMilk.fulfilled, (s, a) => { s.milk.unshift(a.payload); })
-      .addCase(fetchMilkTrends.fulfilled, (s, a) => { s.milkTrends = a.payload; })
-      .addCase(fetchVaccinations.fulfilled, (s, a) => { s.loading = false; s.vaccinations = a.payload; })
+      .addCase(fetchMilkTrends.fulfilled, (s, a) => { endFetch(s); s.milkTrends = a.payload; })
+      .addCase(fetchVaccinations.fulfilled, (s, a) => { endFetch(s); s.vaccinations = a.payload; })
       .addCase(createVaccination.fulfilled, (s, a) => { s.vaccinations.push(a.payload); })
-      .addCase(fetchPregnancies.fulfilled, (s, a) => { s.loading = false; s.pregnancies = a.payload; })
+      .addCase(fetchPregnancies.fulfilled, (s, a) => { endFetch(s); s.pregnancies = a.payload; })
       .addCase(createPregnancy.fulfilled, (s, a) => { s.pregnancies.unshift(a.payload); })
-      .addCase(fetchCollections.fulfilled, (s, a) => { s.collections = a.payload; })
-      .addCase(fetchKnowledge.fulfilled, (s, a) => { s.loading = false; s.knowledge = a.payload; })
-      .addCase(fetchDevices.fulfilled, (s, a) => { s.devices = a.payload; })
+      .addCase(fetchCollections.fulfilled, (s, a) => { endFetch(s); s.collections = a.payload; })
+      .addCase(fetchKnowledge.fulfilled, (s, a) => { endFetch(s); s.knowledge = a.payload; })
+      .addCase(fetchDevices.fulfilled, (s, a) => { endFetch(s); s.devices = a.payload; })
       .addCase(createDevice.fulfilled, (s, a) => { s.devices.unshift(a.payload); })
-      .addCase(fetchAnalytics.fulfilled, (s, a) => { s.loading = false; s.analytics = a.payload; })
-      .addCase(fetchHealthInsights.fulfilled, (s, a) => { s.healthInsights = a.payload; })
-      .addMatcher((a) => a.type.startsWith('farm/') && a.type.endsWith('/pending'), (s) => { s.loading = true; })
-      .addMatcher((a) => a.type.startsWith('farm/') && a.type.endsWith('/rejected'), (s, a) => { s.loading = false; s.error = a.payload; });
+      .addCase(fetchAnalytics.fulfilled, (s, a) => { endFetch(s); s.analytics = a.payload; })
+      .addCase(fetchHealthInsights.fulfilled, (s, a) => { endFetch(s); s.healthInsights = a.payload; })
+      .addMatcher((a) => /^farm\/fetch\w+\/pending$/.test(a.type), startFetch)
+      .addMatcher((a) => /^farm\/fetch\w+\/rejected$/.test(a.type), (s, a) => { endFetch(s); s.error = a.payload; });
   },
 });
 

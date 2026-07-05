@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchMessages, sendMessage } from './messagesSlice';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import { SafeScreen } from '../../components/Screen';
 import { colors, spacing } from '../../theme';
 
@@ -12,7 +15,7 @@ export default function ChatScreen({ route }) {
   const { conversationId } = route.params;
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-  const { activeMessages, conversations } = useSelector((s) => s.messages);
+  const { activeMessages, conversations, messagesLoading } = useSelector((s) => s.messages);
   const currentUserId = useSelector((s) => s.auth.user?.id);
   const [text, setText] = useState('');
   const activeConv = conversations.find((c) => c.id === conversationId);
@@ -21,11 +24,18 @@ export default function ChatScreen({ route }) {
     dispatch(fetchMessages(conversationId));
   }, [dispatch, conversationId]);
 
+  const load = useCallback(() => dispatch(fetchMessages(conversationId)).unwrap(), [dispatch, conversationId]);
+  const { refreshing, onRefresh } = useRefresh(load);
+
   const handleSend = () => {
     if (!text.trim()) return;
     dispatch(sendMessage({ conversationId, content: text.trim() }));
     setText('');
   };
+
+  if (messagesLoading && !activeMessages.length) {
+    return <LoadingView message="Loading messages…" />;
+  }
 
   return (
     <SafeScreen edges={['top', 'left', 'right']}>
@@ -41,11 +51,13 @@ export default function ChatScreen({ route }) {
           )}
         </View>
 
-        <FlatList
+        <RefreshableFlatList
           style={styles.flex}
           contentContainerStyle={styles.messages}
           data={activeMessages}
           keyExtractor={(item) => item.id}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           ListEmptyComponent={<Text style={styles.empty}>No messages yet. Send the first one!</Text>}
           renderItem={({ item }) => (
             <View style={[styles.bubble, item.senderId === currentUserId && styles.mine]}>

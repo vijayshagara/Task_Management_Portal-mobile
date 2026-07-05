@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, Text, Switch, StyleSheet, Alert } from 'react-native';
+import { ScrollView, View, Text, Switch, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { api } from '../../api/client';
 import Screen from '../../components/Screen';

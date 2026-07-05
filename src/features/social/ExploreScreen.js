@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchExplore, globalSearch, clearSearchResults } from './notificationsSlice';
 import { getSocialMediaUrl } from '../../utils/socialHelpers';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
 
 export default function ExploreScreen({ navigation }) {
   const dispatch = useDispatch();
-  const { explore, searchResults } = useSelector((s) => s.notifications);
+  const { explore, searchResults, loading } = useSelector((s) => s.notifications);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -19,7 +21,10 @@ export default function ExploreScreen({ navigation }) {
     return () => dispatch(clearSearchResults());
   }, [dispatch]);
 
-  if (!explore && !searchResults) return <LoadingView message="Loading explore…" />;
+  const load = useCallback(() => dispatch(fetchExplore()).unwrap(), [dispatch]);
+  const { refreshing, onRefresh } = useRefresh(load);
+
+  if (loading && !explore) return <LoadingView message="Loading explore…" />;
 
   return (
     <Screen title="Explore" subtitle="Discover farms and listings">
@@ -28,7 +33,7 @@ export default function ExploreScreen({ navigation }) {
         <Button title="Go" onPress={() => query.trim() && dispatch(globalSearch(query.trim()))} style={{ minWidth: 60 }} />
       </View>
 
-      <ScrollView>
+      <RefreshableScrollView refreshing={refreshing} onRefresh={onRefresh}>
         {searchResults ? (
           <>
             {searchResults.users?.map((u) => (
@@ -80,7 +85,7 @@ export default function ExploreScreen({ navigation }) {
             </View>
           </>
         )}
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

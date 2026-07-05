@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, Alert } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTasks, fetchDeveloperTasks, addTask, updateTask, deleteTask } from './taskSlice';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
@@ -20,6 +22,12 @@ export default function TasksScreen() {
   useEffect(() => {
     user?.role === 'admin' ? dispatch(fetchTasks()) : dispatch(fetchDeveloperTasks());
   }, [dispatch, user?.role]);
+
+  const load = useCallback(
+    () => (user?.role === 'admin' ? dispatch(fetchTasks()) : dispatch(fetchDeveloperTasks())).unwrap(),
+    [dispatch, user?.role],
+  );
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
     try {
@@ -46,9 +54,11 @@ export default function TasksScreen() {
           <Button title="Create Task" onPress={submit} />
         </View>
       )}
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.title}>{item.title}</Text>

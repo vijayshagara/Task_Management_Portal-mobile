@@ -8,6 +8,8 @@ import Input from '../../../components/Input';
 import Button from '../../../components/Button';
 import { colors, spacing } from '../../../theme';
 
+const EMPTY_COMMENTS = [];
+
 function CommentBlock({ comment, currentUserId, onReply, replyingTo, onSubmitReply, onCancelReply }) {
   const [replyText, setReplyText] = useState('');
   const isOwn = comment.authorId === currentUserId;
@@ -52,7 +54,7 @@ export default function PostCard({ post, onLike, onUnlike, navigation }) {
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
-  const comments = useSelector((s) => s.feed.comments[post.id] || []);
+  const comments = useSelector((s) => s.feed.comments[post.id] ?? EMPTY_COMMENTS);
   const currentUserId = useSelector((s) => s.auth.user?.id);
   const firstMedia = post.media?.[0];
 

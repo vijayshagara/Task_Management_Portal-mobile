@@ -46,11 +46,15 @@ export const deleteCow = createAsyncThunk('cows/delete', async (id, { rejectWith
 export const uploadCowImage = createAsyncThunk('cows/uploadImage', async ({ id, uri }, { rejectWithValue }) => {
   try {
     const formData = new FormData();
-    const filename = uri.split('/').pop() || 'cow.jpg';
-    formData.append('image', { uri, name: filename, type: 'image/jpeg' });
-    const res = await api.post(`/cows/${id}/image`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    const name = uri.split('/').pop() || 'cow.jpg';
+    const ext = name.split('.').pop()?.toLowerCase();
+    const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    formData.append('image', {
+      uri,
+      name: name.includes('.') ? name : 'cow.jpg',
+      type,
     });
+    const res = await api.post(`/cows/${id}/image`, formData);
     return res.data;
   } catch (err) {
     return rejectWithValue(getErrorMessage(err));
@@ -63,6 +67,8 @@ const cowSlice = createSlice({
     items: [],
     selected: null,
     loading: false,
+    detailLoading: false,
+    saving: false,
     error: null,
   },
   reducers: {
@@ -84,21 +90,55 @@ const cowSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(fetchCowById.pending, (state) => {
+        state.detailLoading = true;
+        state.selected = null;
+      })
       .addCase(fetchCowById.fulfilled, (state, action) => {
+        state.detailLoading = false;
         state.selected = action.payload;
+      })
+      .addCase(fetchCowById.rejected, (state) => {
+        state.detailLoading = false;
+      })
+      .addCase(addCow.pending, (state) => {
+        state.saving = true;
+        state.error = null;
       })
       .addCase(addCow.fulfilled, (state, action) => {
+        state.saving = false;
         state.items.push(action.payload);
       })
+      .addCase(addCow.rejected, (state, action) => {
+        state.saving = false;
+        state.error = action.payload;
+      })
+      .addCase(updateCow.pending, (state) => {
+        state.saving = true;
+        state.error = null;
+      })
       .addCase(updateCow.fulfilled, (state, action) => {
+        state.saving = false;
         const index = state.items.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) state.items[index] = action.payload;
         state.selected = action.payload;
       })
+      .addCase(updateCow.rejected, (state, action) => {
+        state.saving = false;
+        state.error = action.payload;
+      })
+      .addCase(uploadCowImage.pending, (state) => {
+        state.saving = true;
+      })
       .addCase(uploadCowImage.fulfilled, (state, action) => {
+        state.saving = false;
         const index = state.items.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) state.items[index] = action.payload;
         state.selected = action.payload;
+      })
+      .addCase(uploadCowImage.rejected, (state, action) => {
+        state.saving = false;
+        state.error = action.payload;
       })
       .addCase(deleteCow.fulfilled, (state, action) => {
         state.items = state.items.filter((c) => c.id !== action.payload);

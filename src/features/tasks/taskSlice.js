@@ -56,12 +56,20 @@ const taskSlice = createSlice({
         state.loading = false;
         state.items = action.payload;
       })
+      .addCase(fetchTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(fetchDeveloperTasks.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchDeveloperTasks.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload;
+      })
+      .addCase(fetchDeveloperTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
       .addCase(addTask.fulfilled, (state, action) => {
         state.items.unshift(action.payload);

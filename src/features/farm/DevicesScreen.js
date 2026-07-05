@@ -1,19 +1,25 @@
-import { useEffect, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, Alert } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import LoadingView from '../../components/LoadingView';
+import RefreshableScrollView from '../../components/RefreshableScrollView';
+import useRefresh from '../../hooks/useRefresh';
 import { fetchDevices, createDevice } from './farmSlice';
 import { colors, spacing } from '../../theme';
 
 export default function DevicesScreen() {
   const dispatch = useDispatch();
-  const { devices } = useSelector((s) => s.farm);
+  const { devices, loading } = useSelector((s) => s.farm);
   const [form, setForm] = useState({ deviceName: '', cowId: '' });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => { dispatch(fetchDevices()); }, [dispatch]);
+
+  const load = useCallback(() => dispatch(fetchDevices()).unwrap(), [dispatch]);
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
     try {
@@ -25,9 +31,15 @@ export default function DevicesScreen() {
     }
   };
 
+  if (loading && !devices.length) return <LoadingView message="Loading devices…" />;
+
   return (
     <Screen title="IoT Devices" subtitle="ESP32 sensor keys">
-      <ScrollView contentContainerStyle={{ padding: spacing.md }}>
+      <RefreshableScrollView
+        contentContainerStyle={{ padding: spacing.md }}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      >
         <Input value={form.deviceName} onChangeText={(v) => set('deviceName', v)} placeholder="Device name" />
         <Input value={form.cowId} onChangeText={(v) => set('cowId', v)} placeholder="Cow ID (optional)" />
         <Button title="Generate Key" onPress={submit} />
@@ -37,7 +49,7 @@ export default function DevicesScreen() {
             <Text>{d.isActive ? 'Active' : 'Revoked'} — {d.cow?.name || 'No cow linked'}</Text>
           </View>
         ))}
-      </ScrollView>
+      </RefreshableScrollView>
     </Screen>
   );
 }

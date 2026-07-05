@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, Alert } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchHeatCycles, addHeatCycle, confirmHeatCycle, deleteHeatCycle } from './heatCycleSlice';
 import { fetchCows } from '../cows/cowSlice';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
+import RefreshableFlatList from '../../components/RefreshableFlatList';
+import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
@@ -20,6 +22,12 @@ export default function HeatCycleScreen() {
     dispatch(fetchHeatCycles());
     dispatch(fetchCows());
   }, [dispatch]);
+
+  const load = useCallback(
+    () => Promise.all([dispatch(fetchHeatCycles()).unwrap(), dispatch(fetchCows()).unwrap()]),
+    [dispatch],
+  );
+  const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
     try {
@@ -42,9 +50,11 @@ export default function HeatCycleScreen() {
           <Button title="Log Heat Cycle" onPress={submit} />
         </View>
       )}
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Text style={styles.title}>{item.cow?.name || item.cowId}</Text>

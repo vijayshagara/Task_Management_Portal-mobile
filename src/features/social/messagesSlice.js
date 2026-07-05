@@ -59,6 +59,7 @@ const messagesSlice = createSlice({
     activeMessages: [],
     activeConversationId: null,
     loading: false,
+    messagesLoading: false,
     starting: false,
     sending: false,
     error: null,
@@ -97,9 +98,16 @@ const messagesSlice = createSlice({
         state.starting = false;
         state.error = action.payload;
       })
+      .addCase(fetchMessages.pending, (state) => {
+        state.messagesLoading = true;
+      })
       .addCase(fetchMessages.fulfilled, (state, action) => {
+        state.messagesLoading = false;
         state.activeMessages = action.payload.messages;
         state.activeConversationId = action.payload.conversationId;
+      })
+      .addCase(fetchMessages.rejected, (state) => {
+        state.messagesLoading = false;
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         const { conversationId, message } = action.payload;
