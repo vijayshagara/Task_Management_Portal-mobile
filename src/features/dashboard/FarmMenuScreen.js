@@ -18,6 +18,7 @@ function MenuItem({ icon, label, onPress, badge }) {
 export default function FarmMenuScreen({ navigation }) {
   const user = useSelector((s) => s.auth.user);
   const unread = useSelector((s) => s.notifications.unreadCount);
+  const canManage = user?.role === 'admin' || user?.role === 'farmer';
 
   return (
     <Screen title="Farm & More" subtitle={`Logged in as ${user?.name}`}>
@@ -29,9 +30,15 @@ export default function FarmMenuScreen({ navigation }) {
 
         <Text style={styles.section}>Farm Management</Text>
         <MenuItem icon="grid-outline" label="Dashboard" onPress={() => navigation.navigate('Dashboard')} />
+        <MenuItem icon="book-outline" label="Farm Diary" onPress={() => navigation.navigate('Diary')} />
+        <MenuItem icon="water-outline" label="Milk Production" onPress={() => navigation.navigate('Milk')} />
         <MenuItem icon="paw-outline" label="Cows" onPress={() => navigation.navigate('Cows')} />
         <MenuItem icon="heart-outline" label="Health Records" onPress={() => navigation.navigate('Health')} />
         <MenuItem icon="flame-outline" label="Heat Cycles" onPress={() => navigation.navigate('HeatCycles')} />
+        <MenuItem icon="medkit-outline" label="Vaccinations" onPress={() => navigation.navigate('Vaccinations')} />
+        <MenuItem icon="happy-outline" label="Breeding" onPress={() => navigation.navigate('Pregnancies')} />
+        <MenuItem icon="bulb-outline" label="Knowledge Base" onPress={() => navigation.navigate('Knowledge')} />
+        <MenuItem icon="hardware-chip-outline" label="IoT Devices" onPress={() => navigation.navigate('Devices')} />
         <MenuItem icon="clipboard-outline" label="Tasks" onPress={() => navigation.navigate('Tasks')} />
         {user?.role === 'admin' && (
           <MenuItem icon="people-outline" label="Users" onPress={() => navigation.navigate('Users')} />

@@ -35,7 +35,7 @@ export default function CowDetailScreen({ navigation, route }) {
         {[['Breed', cow.breed], ['Gender', cow.gender], ['Age', `${cow.age} years`], ['Weight', `${cow.weight} kg`], ['Status', cow.status], ['Tag ID', cow.tagId]].map(([k, v]) => (
           <View key={k} style={styles.row}><Text style={styles.label}>{k}</Text><Text style={styles.value}>{v || '—'}</Text></View>
         ))}
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'farmer') && (
           <>
             <Button title="Edit Cow" onPress={() => navigation.navigate('CowForm', { id: cow.id })} style={{ marginTop: spacing.lg }} />
             <Button title="Delete Cow" variant="outline" onPress={handleDelete} style={{ marginTop: spacing.sm, borderColor: colors.danger }} />

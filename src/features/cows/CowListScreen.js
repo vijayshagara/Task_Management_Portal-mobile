@@ -23,7 +23,7 @@ export default function CowListScreen({ navigation }) {
     <Screen
       title="Cows"
       subtitle={`${items.length} in herd`}
-      action={user?.role === 'admin' ? <Button title="+ Add" onPress={() => navigation.navigate('CowForm')} style={{ paddingHorizontal: 12 }} /> : null}
+      action={(user?.role === 'admin' || user?.role === 'farmer') ? <Button title="+ Add" onPress={() => navigation.navigate('CowForm')} style={{ paddingHorizontal: 12 }} /> : null}
     >
       <FlatList
         data={items}

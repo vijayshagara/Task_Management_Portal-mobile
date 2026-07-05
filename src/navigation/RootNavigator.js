@@ -14,6 +14,7 @@ import FeedScreen from '../features/social/FeedScreen';
 import ExploreScreen from '../features/social/ExploreScreen';
 import MarketplaceScreen from '../features/social/MarketplaceScreen';
 import ListingDetailScreen from '../features/social/ListingDetailScreen';
+import CreateListingScreen from '../features/social/CreateListingScreen';
 import ProfileScreen from '../features/social/ProfileScreen';
 import ConversationsScreen from '../features/social/ConversationsScreen';
 import ChatScreen from '../features/social/ChatScreen';
@@ -28,6 +29,12 @@ import TasksScreen from '../features/tasks/TasksScreen';
 import UsersScreen from '../features/users/UsersScreen';
 import NotificationsScreen from '../features/social/NotificationsScreen';
 import SettingsScreen from '../features/social/SettingsScreen';
+import DiaryScreen from '../features/farm/DiaryScreen';
+import MilkScreen from '../features/farm/MilkScreen';
+import VaccinationsScreen from '../features/farm/VaccinationsScreen';
+import PregnanciesScreen from '../features/farm/PregnanciesScreen';
+import KnowledgeScreen from '../features/farm/KnowledgeScreen';
+import DevicesScreen from '../features/farm/DevicesScreen';
 
 const AuthStack = createNativeStackNavigator();
 const FeedStack = createNativeStackNavigator();
@@ -61,6 +68,7 @@ function MarketNavigator() {
     <MarketStack.Navigator screenOptions={{ headerShown: false }}>
       <MarketStack.Screen name="MarketHome" component={MarketplaceScreen} />
       <MarketStack.Screen name="ListingDetail" component={ListingDetailScreen} />
+      <MarketStack.Screen name="CreateListing" component={CreateListingScreen} />
       <MarketStack.Screen name="Profile" component={ProfileScreen} />
     </MarketStack.Navigator>
   );
@@ -80,6 +88,12 @@ function MenuNavigator() {
     <MenuStack.Navigator screenOptions={{ headerShown: false }}>
       <MenuStack.Screen name="FarmMenu" component={FarmMenuScreen} />
       <MenuStack.Screen name="Dashboard" component={DashboardScreen} />
+      <MenuStack.Screen name="Diary" component={DiaryScreen} />
+      <MenuStack.Screen name="Milk" component={MilkScreen} />
+      <MenuStack.Screen name="Vaccinations" component={VaccinationsScreen} />
+      <MenuStack.Screen name="Pregnancies" component={PregnanciesScreen} />
+      <MenuStack.Screen name="Knowledge" component={KnowledgeScreen} />
+      <MenuStack.Screen name="Devices" component={DevicesScreen} />
       <MenuStack.Screen name="Cows" component={CowListScreen} />
       <MenuStack.Screen name="CowDetail" component={CowDetailScreen} />
       <MenuStack.Screen name="CowForm" component={CowFormScreen} />
@@ -111,18 +125,9 @@ function MainTabs() {
           paddingBottom: insets.bottom,
           paddingTop: Platform.OS === 'android' ? 4 : 6,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          marginBottom: Platform.OS === 'android' ? 2 : 0,
-        },
+        tabBarLabelStyle: { fontSize: 11, marginBottom: Platform.OS === 'android' ? 2 : 0 },
         tabBarIcon: ({ color, size }) => {
-          const icons = {
-            FeedTab: 'home',
-            ExploreTab: 'compass',
-            MarketTab: 'storefront',
-            MessagesTab: 'chatbubbles',
-            MenuTab: 'menu',
-          };
+          const icons = { FeedTab: 'home', ExploreTab: 'compass', MarketTab: 'storefront', MessagesTab: 'chatbubbles', MenuTab: 'menu' };
           return <Ionicons name={icons[route.name]} size={size} color={color} />;
         },
       })}
@@ -147,9 +152,7 @@ function AuthNavigator() {
 
 export default function RootNavigator() {
   const { token, bootstrapping } = useSelector((s) => s.auth);
-
   if (bootstrapping) return null;
-
   return (
     <NavigationContainer>
       {token ? <MainTabs /> : <AuthNavigator />}

@@ -8,11 +8,13 @@ import RootNavigator from './src/navigation/RootNavigator';
 import LoadingView from './src/components/LoadingView';
 import { loadAuth } from './src/store/authStorage';
 import { setAuthSession, finishBootstrap } from './src/features/auth/authSlice';
+import { syncOfflineQueue } from './src/utils/offlineQueue';
 import { useSelector } from 'react-redux';
 
 function Bootstrap({ children }) {
   const dispatch = useDispatch();
   const bootstrapping = useSelector((s) => s.auth.bootstrapping);
+  const token = useSelector((s) => s.auth.token);
 
   useEffect(() => {
     loadAuth()
@@ -22,6 +24,10 @@ function Bootstrap({ children }) {
       })
       .catch(() => dispatch(finishBootstrap()));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (token) syncOfflineQueue().catch(() => {});
+  }, [token]);
 
   if (bootstrapping) return <LoadingView message="Starting app…" />;
   return children;

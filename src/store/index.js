@@ -10,6 +10,7 @@ import profileReducer from '../features/social/profileSlice';
 import marketplaceReducer from '../features/social/marketplaceSlice';
 import messagesReducer from '../features/social/messagesSlice';
 import notificationsReducer from '../features/social/notificationsSlice';
+import farmReducer from '../features/farm/farmSlice';
 import { api } from '../api/client';
 
 export const store = configureStore({
@@ -25,6 +26,7 @@ export const store = configureStore({
     marketplace: marketplaceReducer,
     messages: messagesReducer,
     notifications: notificationsReducer,
+    farm: farmReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }),

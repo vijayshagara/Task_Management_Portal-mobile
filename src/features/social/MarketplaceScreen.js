@@ -6,6 +6,7 @@ import { getSocialMediaUrl } from '../../utils/socialHelpers';
 import Screen from '../../components/Screen';
 import LoadingView from '../../components/LoadingView';
 import EmptyState from '../../components/EmptyState';
+import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
 
 export default function MarketplaceScreen({ navigation }) {
@@ -19,7 +20,11 @@ export default function MarketplaceScreen({ navigation }) {
   if (loading && !items.length) return <LoadingView message="Loading marketplace…" />;
 
   return (
-    <Screen title="Marketplace" subtitle="Buy & sell livestock">
+    <Screen
+      title="Marketplace"
+      subtitle="Buy & sell livestock"
+      action={<Button title="Sell" onPress={() => navigation.navigate('CreateListing')} style={{ paddingVertical: 8, minHeight: 36 }} />}
+    >
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}

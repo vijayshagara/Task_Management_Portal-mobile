@@ -43,6 +43,20 @@ export const deleteCow = createAsyncThunk('cows/delete', async (id, { rejectWith
   }
 });
 
+export const uploadCowImage = createAsyncThunk('cows/uploadImage', async ({ id, uri }, { rejectWithValue }) => {
+  try {
+    const formData = new FormData();
+    const filename = uri.split('/').pop() || 'cow.jpg';
+    formData.append('image', { uri, name: filename, type: 'image/jpeg' });
+    const res = await api.post(`/cows/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
 const cowSlice = createSlice({
   name: 'cows',
   initialState: {
@@ -77,6 +91,11 @@ const cowSlice = createSlice({
         state.items.push(action.payload);
       })
       .addCase(updateCow.fulfilled, (state, action) => {
+        const index = state.items.findIndex((c) => c.id === action.payload.id);
+        if (index !== -1) state.items[index] = action.payload;
+        state.selected = action.payload;
+      })
+      .addCase(uploadCowImage.fulfilled, (state, action) => {
         const index = state.items.findIndex((c) => c.id === action.payload.id);
         if (index !== -1) state.items[index] = action.payload;
         state.selected = action.payload;
