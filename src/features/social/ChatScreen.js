@@ -11,8 +11,8 @@ import useRefresh from '../../hooks/useRefresh';
 import { SafeScreen } from '../../components/Screen';
 import { colors, spacing } from '../../theme';
 
-export default function ChatScreen({ route }) {
-  const { conversationId } = route.params;
+export default function ChatScreen({ route, navigation }) {
+  const conversationId = route.params?.conversationId;
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const { activeMessages, conversations, messagesLoading } = useSelector((s) => s.messages);
@@ -21,17 +21,31 @@ export default function ChatScreen({ route }) {
   const activeConv = conversations.find((c) => c.id === conversationId);
 
   useEffect(() => {
+    if (!conversationId) {
+      navigation.goBack();
+      return;
+    }
     dispatch(fetchMessages(conversationId));
-  }, [dispatch, conversationId]);
+  }, [dispatch, conversationId, navigation]);
 
-  const load = useCallback(() => dispatch(fetchMessages(conversationId)).unwrap(), [dispatch, conversationId]);
+  const load = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(fetchMessages(conversationId)).unwrap();
+  }, [dispatch, conversationId]);
   const { refreshing, onRefresh } = useRefresh(load);
 
-  const handleSend = () => {
-    if (!text.trim()) return;
-    dispatch(sendMessage({ conversationId, content: text.trim() }));
+  const handleSend = async () => {
+    if (!text.trim() || !conversationId) return;
+    const content = text.trim();
     setText('');
+    try {
+      await dispatch(sendMessage({ conversationId, content })).unwrap();
+    } catch {
+      setText(content);
+    }
   };
+
+  if (!conversationId) return <LoadingView message="Opening chat…" />;
 
   if (messagesLoading && !activeMessages.length) {
     return <LoadingView message="Loading messages…" />;

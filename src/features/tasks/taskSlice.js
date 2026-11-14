@@ -43,6 +43,25 @@ export const deleteTask = createAsyncThunk('tasks/delete', async (id, { rejectWi
   }
 });
 
+export const bulkDeleteTasks = createAsyncThunk('tasks/bulkDelete', async (ids, { rejectWithValue }) => {
+  try {
+    return (await api.post('/tasks/bulk-delete', { ids })).data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
+export const bulkUpdateTaskStatus = createAsyncThunk(
+  'tasks/bulkStatus',
+  async ({ ids, status }, { rejectWithValue }) => {
+    try {
+      return (await api.post('/tasks/bulk-status', { ids, status })).data;
+    } catch (err) {
+      return rejectWithValue(getErrorMessage(err));
+    }
+  }
+);
+
 const taskSlice = createSlice({
   name: 'tasks',
   initialState: { items: [], loading: false, error: null },
@@ -80,6 +99,17 @@ const taskSlice = createSlice({
       })
       .addCase(deleteTask.fulfilled, (state, action) => {
         state.items = state.items.filter((t) => t.id !== action.payload);
+      })
+      .addCase(bulkDeleteTasks.fulfilled, (state, action) => {
+        const idSet = new Set(action.payload.ids);
+        state.items = state.items.filter((t) => !idSet.has(t.id));
+      })
+      .addCase(bulkUpdateTaskStatus.fulfilled, (state, action) => {
+        const items = action.payload.items || [];
+        items.forEach((item) => {
+          const index = state.items.findIndex((t) => t.id === item.id);
+          if (index !== -1) state.items[index] = item;
+        });
       });
   },
 });

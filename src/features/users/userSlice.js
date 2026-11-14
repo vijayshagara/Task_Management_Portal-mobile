@@ -43,6 +43,14 @@ export const deleteUser = createAsyncThunk('users/delete', async (id, { rejectWi
   }
 });
 
+export const bulkDeleteUsers = createAsyncThunk('users/bulkDelete', async (ids, { rejectWithValue }) => {
+  try {
+    return (await api.post('/users/bulk-delete', { ids })).data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
 const userSlice = createSlice({
   name: 'users',
   initialState: { items: [], developers: [], loading: false, error: null },
@@ -72,6 +80,10 @@ const userSlice = createSlice({
       })
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.items = state.items.filter((u) => u.id !== action.payload);
+      })
+      .addCase(bulkDeleteUsers.fulfilled, (state, action) => {
+        const idSet = new Set(action.payload.ids);
+        state.items = state.items.filter((u) => !idSet.has(u.id));
       });
   },
 });

@@ -98,20 +98,30 @@ const messagesSlice = createSlice({
         state.starting = false;
         state.error = action.payload;
       })
-      .addCase(fetchMessages.pending, (state) => {
+      .addCase(fetchMessages.pending, (state, action) => {
         state.messagesLoading = true;
+        const requestedId = action.meta.arg;
+        if (requestedId && state.activeConversationId !== requestedId) {
+          state.activeMessages = [];
+          state.activeConversationId = requestedId;
+        }
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
         state.messagesLoading = false;
+        // Ignore stale responses from a previous conversation
+        if (action.payload.conversationId !== state.activeConversationId) return;
         state.activeMessages = action.payload.messages;
         state.activeConversationId = action.payload.conversationId;
       })
-      .addCase(fetchMessages.rejected, (state) => {
+      .addCase(fetchMessages.rejected, (state, action) => {
         state.messagesLoading = false;
+        state.error = action.payload;
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         const { conversationId, message } = action.payload;
-        state.activeMessages.push(message);
+        if (conversationId === state.activeConversationId) {
+          state.activeMessages.push(message);
+        }
         const conv = state.conversations.find((c) => c.id === conversationId);
         if (conv) {
           conv.lastMessage = message;

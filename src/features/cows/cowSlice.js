@@ -43,6 +43,14 @@ export const deleteCow = createAsyncThunk('cows/delete', async (id, { rejectWith
   }
 });
 
+export const bulkDeleteCows = createAsyncThunk('cows/bulkDelete', async (ids, { rejectWithValue }) => {
+  try {
+    return (await api.post('/cows/bulk-delete', { ids })).data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
 export const uploadCowImage = createAsyncThunk('cows/uploadImage', async ({ id, uri }, { rejectWithValue }) => {
   try {
     const formData = new FormData();
@@ -142,6 +150,10 @@ const cowSlice = createSlice({
       })
       .addCase(deleteCow.fulfilled, (state, action) => {
         state.items = state.items.filter((c) => c.id !== action.payload);
+      })
+      .addCase(bulkDeleteCows.fulfilled, (state, action) => {
+        const idSet = new Set(action.payload.ids);
+        state.items = state.items.filter((c) => !idSet.has(c.id));
       });
   },
 });

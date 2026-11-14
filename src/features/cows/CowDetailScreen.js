@@ -8,20 +8,28 @@ import RefreshableScrollView from '../../components/RefreshableScrollView';
 import useRefresh from '../../hooks/useRefresh';
 import Button from '../../components/Button';
 import CowImage from '../../components/CowImage';
+import { formatDate, titleCase } from '../../utils/helpers';
 import { colors, spacing } from '../../theme';
 
 export default function CowDetailScreen({ navigation, route }) {
-  const { id } = route.params;
+  const id = route.params?.id;
   const dispatch = useDispatch();
   const cow = useSelector((s) => s.cows.selected);
   const detailLoading = useSelector((s) => s.cows.detailLoading);
   const user = useSelector((s) => s.auth.user);
 
   useEffect(() => {
+    if (!id) {
+      navigation.goBack();
+      return;
+    }
     dispatch(fetchCowById(id));
-  }, [dispatch, id]);
+  }, [dispatch, id, navigation]);
 
-  const load = useCallback(() => dispatch(fetchCowById(id)).unwrap(), [dispatch, id]);
+  const load = useCallback(() => {
+    if (!id) return Promise.resolve();
+    return dispatch(fetchCowById(id)).unwrap();
+  }, [dispatch, id]);
   const { refreshing, onRefresh } = useRefresh(load);
 
   const handleDelete = () => {
@@ -44,9 +52,13 @@ export default function CowDetailScreen({ navigation, route }) {
         onRefresh={onRefresh}
       >
         <CowImage cow={cow} large style={{ marginBottom: spacing.md }} />
-        {[['Breed', cow.breed], ['Gender', cow.gender], ['Birth date', cow.birthDate], ['Father', cow.fatherName], ['Mother', cow.motherName]].map(([k, v]) => (
+        {[['Breed', cow.breed], ['Gender', titleCase(cow.gender)], ['Birth date', cow.birthDate ? formatDate(cow.birthDate) : null], ['Father', cow.fatherName], ['Mother', cow.motherName]].map(([k, v]) => (
           <View key={k} style={styles.row}><Text style={styles.label}>{k}</Text><Text style={styles.value}>{v || '—'}</Text></View>
         ))}
+        <View style={styles.links}>
+          <Button title="Health records" variant="outline" onPress={() => navigation.navigate('Health', { cow: cow.id })} style={{ flex: 1 }} />
+          <Button title="Heat cycles" variant="outline" onPress={() => navigation.navigate('HeatCycles', { cow: cow.id })} style={{ flex: 1 }} />
+        </View>
         {(user?.role === 'admin' || user?.role === 'farmer') && (
           <>
             <Button title="Edit Cow" onPress={() => navigation.navigate('CowForm', { id: cow.id })} style={{ marginTop: spacing.lg }} />
@@ -59,6 +71,7 @@ export default function CowDetailScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
+  links: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   row: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors.card, padding: spacing.md, borderRadius: 10, marginBottom: spacing.sm },
   label: { color: colors.textMuted, fontWeight: '600' },
   value: { color: colors.text, fontWeight: '500' },

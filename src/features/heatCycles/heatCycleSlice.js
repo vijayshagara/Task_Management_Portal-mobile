@@ -44,6 +44,22 @@ export const confirmHeatCycle = createAsyncThunk('heat/confirm', async (id, { re
   }
 });
 
+export const bulkDeleteHeatCycles = createAsyncThunk('heat/bulkDelete', async (ids, { rejectWithValue }) => {
+  try {
+    return (await api.post('/heat-cycles/bulk-delete', { ids })).data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
+export const bulkConfirmHeatCycles = createAsyncThunk('heat/bulkConfirm', async (ids, { rejectWithValue }) => {
+  try {
+    return (await api.post('/heat-cycles/bulk-confirm', { ids })).data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
 const heatSlice = createSlice({
   name: 'heatCycles',
   initialState: { items: [], loading: false, error: null },
@@ -71,12 +87,34 @@ const heatSlice = createSlice({
       .addCase(deleteHeatCycle.fulfilled, (state, action) => {
         state.items = state.items.filter((c) => c.id !== action.payload);
       })
+      .addCase(bulkDeleteHeatCycles.fulfilled, (state, action) => {
+        const idSet = new Set(action.payload.ids);
+        state.items = state.items.filter((c) => !idSet.has(c.id));
+      })
       .addCase(confirmHeatCycle.fulfilled, (state, action) => {
         const cycle = state.items.find((c) => c.id === action.payload);
         if (cycle) {
           cycle.status = 'confirmed';
           cycle.confirmedAt = new Date().toISOString();
         }
+      })
+      .addCase(bulkConfirmHeatCycles.fulfilled, (state, action) => {
+        const items = action.payload.items || [];
+        if (items.length) {
+          items.forEach((item) => {
+            const index = state.items.findIndex((c) => c.id === item.id);
+            if (index !== -1) state.items[index] = item;
+          });
+          return;
+        }
+        const idSet = new Set(action.payload.ids || []);
+        const now = new Date().toISOString();
+        state.items.forEach((cycle) => {
+          if (idSet.has(cycle.id)) {
+            cycle.status = 'confirmed';
+            cycle.confirmedAt = now;
+          }
+        });
       });
   },
 });

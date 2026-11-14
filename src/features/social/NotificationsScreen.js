@@ -7,6 +7,7 @@ import LoadingView from '../../components/LoadingView';
 import RefreshableFlatList from '../../components/RefreshableFlatList';
 import useRefresh from '../../hooks/useRefresh';
 import EmptyState from '../../components/EmptyState';
+import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
 
 export default function NotificationsScreen() {
@@ -15,11 +16,10 @@ export default function NotificationsScreen() {
 
   useEffect(() => {
     dispatch(fetchNotifications());
-    dispatch(markAllRead());
   }, [dispatch]);
 
   const load = useCallback(
-    () => Promise.all([dispatch(fetchNotifications()).unwrap(), dispatch(markAllRead()).unwrap()]),
+    () => dispatch(fetchNotifications()).unwrap(),
     [dispatch],
   );
   const { refreshing, onRefresh } = useRefresh(load);
@@ -28,18 +28,26 @@ export default function NotificationsScreen() {
 
   return (
     <Screen title="Notifications" subtitle="Likes, comments, follows & more">
+      {items.length > 0 && (
+        <View style={{ paddingHorizontal: spacing.md, paddingBottom: spacing.sm }}>
+          <Button title="Mark all read" onPress={() => dispatch(markAllRead())} />
+        </View>
+      )}
       <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={<EmptyState title="No notifications" message="Activity from farmers will show here" />}
-        renderItem={({ item }) => (
-          <View style={[styles.item, !item.readAt && styles.unread]}>
-            <Text style={styles.message}>{item.message}</Text>
-            <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const unread = !(item.readAt || item.isRead);
+          return (
+            <View style={[styles.item, unread && styles.unread]}>
+              <Text style={styles.message}>{item.message}</Text>
+              <Text style={styles.time}>{new Date(item.createdAt).toLocaleString()}</Text>
+            </View>
+          );
+        }}
       />
     </Screen>
   );
@@ -48,6 +56,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   item: { backgroundColor: colors.card, padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   unread: { backgroundColor: colors.primaryLight },
-  message: { fontSize: 14, color: colors.text },
-  time: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  message: { fontSize: 15, color: colors.text },
+  time: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
 });

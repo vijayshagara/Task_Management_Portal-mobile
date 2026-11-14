@@ -79,17 +79,19 @@ const notificationsSlice = createSlice({
       })
       .addCase(markAllRead.fulfilled, (state) => {
         state.unreadCount = 0;
-        state.items = state.items.map((n) => ({ ...n, isRead: true }));
+        state.items = state.items.map((n) => ({ ...n, isRead: true, readAt: n.readAt || new Date().toISOString() }));
       })
       .addCase(fetchExplore.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchExplore.fulfilled, (state, action) => {
         state.loading = false;
         state.explore = action.payload;
       })
-      .addCase(fetchExplore.rejected, (state) => {
+      .addCase(fetchExplore.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
       })
       .addCase(globalSearch.fulfilled, (state, action) => {
         state.searchResults = action.payload;

@@ -48,7 +48,6 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.error = null;
-      clearStoredAuth();
     },
     clearAuthError: (state) => {
       state.error = null;
@@ -86,4 +85,10 @@ const authSlice = createSlice({
 });
 
 export const { logout, clearAuthError, setAuthSession, finishBootstrap } = authSlice.actions;
+
+export const logoutAndClear = () => async (dispatch) => {
+  await clearStoredAuth();
+  dispatch(logout());
+};
+
 export default authSlice.reducer;

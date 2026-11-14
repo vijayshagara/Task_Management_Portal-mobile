@@ -10,6 +10,8 @@ import { colors } from '../theme';
 
 import LoginScreen from '../features/auth/LoginScreen';
 import RegisterScreen from '../features/auth/RegisterScreen';
+import ForgotPasswordScreen from '../features/auth/ForgotPasswordScreen';
+import ResetPasswordScreen from '../features/auth/ResetPasswordScreen';
 import FeedScreen from '../features/social/FeedScreen';
 import ExploreScreen from '../features/social/ExploreScreen';
 import MarketplaceScreen from '../features/social/MarketplaceScreen';
@@ -146,6 +148,8 @@ function AuthNavigator() {
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="ResetPassword" component={ResetPasswordScreen} />
     </AuthStack.Navigator>
   );
 }

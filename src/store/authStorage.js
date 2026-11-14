@@ -8,10 +8,24 @@ export async function loadAuth() {
     AsyncStorage.getItem(TOKEN_KEY),
     AsyncStorage.getItem(USER_KEY),
   ]);
-  return {
-    token,
-    user: userJson ? JSON.parse(userJson) : null,
-  };
+
+  let user = null;
+  if (userJson) {
+    try {
+      user = JSON.parse(userJson);
+    } catch {
+      await clearAuth();
+      return { token: null, user: null };
+    }
+  }
+
+  // Orphaned token without user — clear to avoid stale auth
+  if (token && !user) {
+    await clearAuth();
+    return { token: null, user: null };
+  }
+
+  return { token, user };
 }
 
 export async function saveAuth(token, user) {

@@ -35,6 +35,14 @@ export const deleteHealth = createAsyncThunk('health/delete', async (id, { rejec
   }
 });
 
+export const bulkDeleteHealth = createAsyncThunk('health/bulkDelete', async (ids, { rejectWithValue }) => {
+  try {
+    return (await api.post('/health/bulk-delete', { ids })).data;
+  } catch (err) {
+    return rejectWithValue(getErrorMessage(err));
+  }
+});
+
 const healthSlice = createSlice({
   name: 'health',
   initialState: { items: [], loading: false, error: null },
@@ -61,6 +69,10 @@ const healthSlice = createSlice({
       })
       .addCase(deleteHealth.fulfilled, (state, action) => {
         state.items = state.items.filter((r) => r.id !== action.payload);
+      })
+      .addCase(bulkDeleteHealth.fulfilled, (state, action) => {
+        const idSet = new Set(action.payload.ids);
+        state.items = state.items.filter((r) => !idSet.has(r.id));
       });
   },
 });

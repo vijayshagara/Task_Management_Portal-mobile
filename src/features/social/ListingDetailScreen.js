@@ -12,15 +12,22 @@ import Button from '../../components/Button';
 import { colors, spacing } from '../../theme';
 
 export default function ListingDetailScreen({ navigation, route }) {
-  const { id } = route.params;
+  const id = route.params?.id;
   const dispatch = useDispatch();
   const { selected: listing, detailLoading } = useSelector((s) => s.marketplace);
 
   useEffect(() => {
+    if (!id) {
+      navigation.goBack();
+      return;
+    }
     dispatch(fetchListing(id));
-  }, [dispatch, id]);
+  }, [dispatch, id, navigation]);
 
-  const load = useCallback(() => dispatch(fetchListing(id)).unwrap(), [dispatch, id]);
+  const load = useCallback(() => {
+    if (!id) return Promise.resolve();
+    return dispatch(fetchListing(id)).unwrap();
+  }, [dispatch, id]);
   const { refreshing, onRefresh } = useRefresh(load);
 
   const handleContact = async () => {

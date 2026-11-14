@@ -30,6 +30,7 @@ export default function LoginScreen({ navigation }) {
         <Input value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" />
         <Input value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry />
         <Button title={loading ? 'Signing in…' : 'Sign in'} onPress={submit} loading={loading} />
+        <Button title="Forgot password?" variant="outline" onPress={() => navigation.navigate('ForgotPassword')} style={{ marginTop: spacing.sm }} />
         <Button title="Create account" variant="outline" onPress={() => navigation.navigate('Register')} style={{ marginTop: spacing.sm }} />
         </ScrollView>
       </KeyboardAvoidingView>

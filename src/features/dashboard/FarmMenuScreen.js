@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUnreadCount } from '../social/notificationsSlice';
 import Screen from '../../components/Screen';
 import { colors, spacing } from '../../theme';
 
@@ -16,9 +18,13 @@ function MenuItem({ icon, label, onPress, badge }) {
 }
 
 export default function FarmMenuScreen({ navigation }) {
+  const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
   const unread = useSelector((s) => s.notifications.unreadCount);
-  const canManage = user?.role === 'admin' || user?.role === 'farmer';
+
+  useEffect(() => {
+    dispatch(fetchUnreadCount());
+  }, [dispatch]);
 
   return (
     <Screen title="Farm & More" subtitle={`Logged in as ${user?.name}`}>

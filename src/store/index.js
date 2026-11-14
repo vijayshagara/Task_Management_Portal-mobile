@@ -1,5 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer, { logout } from '../features/auth/authSlice';
+import authReducer, { logoutAndClear } from '../features/auth/authSlice';
 import cowReducer from '../features/cows/cowSlice';
 import healthReducer from '../features/health/healthSlice';
 import heatCycleReducer from '../features/heatCycles/heatCycleSlice';
@@ -48,7 +48,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      store.dispatch(logout());
+      store.dispatch(logoutAndClear());
     }
     return Promise.reject(error);
   }

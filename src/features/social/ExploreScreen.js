@@ -26,6 +26,17 @@ export default function ExploreScreen({ navigation }) {
 
   if (loading && !explore) return <LoadingView message="Loading explore…" />;
 
+  if (!explore && !searchResults) {
+    return (
+      <Screen title="Explore" subtitle="Discover farms and listings">
+        <View style={{ padding: spacing.md }}>
+          <Text style={{ color: colors.textMuted }}>Could not load explore content. Pull to refresh or try again later.</Text>
+          <Button title="Retry" onPress={() => dispatch(fetchExplore())} style={{ marginTop: spacing.md }} />
+        </View>
+      </Screen>
+    );
+  }
+
   return (
     <Screen title="Explore" subtitle="Discover farms and listings">
       <View style={styles.searchRow}>
@@ -54,14 +65,14 @@ export default function ExploreScreen({ navigation }) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Trending Hashtags</Text>
               <View style={styles.tags}>
-                {explore.trendingHashtags?.map(({ tag, count }) => (
+                {explore?.trendingHashtags?.map(({ tag, count }) => (
                   <Text key={tag} style={styles.tag}>#{tag} ({count})</Text>
                 ))}
               </View>
             </View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Suggested Farmers</Text>
-              {explore.suggestedUsers?.map((u) => (
+              {explore?.suggestedUsers?.map((u) => (
                 <TouchableOpacity key={u.id} style={styles.userCard} onPress={() => navigation.navigate('Profile', { userId: u.id })}>
                   <View style={styles.avatar}><Text style={styles.avatarText}>{u.name?.charAt(0)}</Text></View>
                   <View>
@@ -73,7 +84,7 @@ export default function ExploreScreen({ navigation }) {
             </View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Recent Listings</Text>
-              {explore.recentListings?.map((l) => (
+              {explore?.recentListings?.map((l) => (
                 <TouchableOpacity key={l.id} style={styles.listingCard} onPress={() => navigation.navigate('ListingDetail', { id: l.id })}>
                   {l.photos?.[0] && <Image source={{ uri: getSocialMediaUrl(l.photos[0]) }} style={styles.listingImg} />}
                   <View style={{ flex: 1 }}>
