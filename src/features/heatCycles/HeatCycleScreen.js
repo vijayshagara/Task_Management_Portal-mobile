@@ -13,8 +13,14 @@ import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
+import DateInput from '../../components/DateInput';
 import { formatDate, formatDateTime } from '../../utils/helpers';
 import { colors, spacing } from '../../theme';
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 export default function HeatCycleScreen({ route }) {
   const dispatch = useDispatch();
@@ -23,7 +29,7 @@ export default function HeatCycleScreen({ route }) {
   const isAdmin = user?.role === 'admin';
   const [showForm, setShowForm] = useState(false);
   const cows = useSelector((s) => s.cows.items);
-  const emptyForm = { cowId: '', heatStartDate: new Date().toISOString().slice(0, 16), detectionMethod: 'manual', notes: '' };
+  const emptyForm = { cowId: '', heatStartDate: todayStr(), detectionMethod: 'manual', notes: '' };
   const [form, setForm] = useState(emptyForm);
   const [filterCow, setFilterCow] = useState(route?.params?.cow || '');
   useEffect(() => {
@@ -54,11 +60,13 @@ export default function HeatCycleScreen({ route }) {
       Alert.alert('Missing cow', 'Please select a cow');
       return;
     }
-    const start = new Date(form.heatStartDate);
-    if (Number.isNaN(start.getTime())) {
-      Alert.alert('Invalid date', 'Use format YYYY-MM-DDTHH:MM');
+    if (!form.heatStartDate) {
+      Alert.alert('Missing date', 'Please pick the heat start date');
       return;
     }
+    const [y, m, d] = form.heatStartDate.split('-').map(Number);
+    const now = new Date();
+    const start = new Date(y, m - 1, d, now.getHours(), now.getMinutes());
     try {
       await dispatch(addHeatCycle({ ...form, heatStartDate: start.toISOString() })).unwrap();
       setForm(emptyForm);
@@ -105,7 +113,7 @@ export default function HeatCycleScreen({ route }) {
       {showForm && (
         <View style={styles.form}>
           <Select value={form.cowId} onChange={(v) => setForm({ ...form, cowId: v })} options={cowOptions} placeholder="Select cow *" />
-          <Input value={form.heatStartDate} onChangeText={(v) => setForm({ ...form, heatStartDate: v })} placeholder="Heat start (YYYY-MM-DDTHH:MM)" autoCapitalize="characters" />
+          <DateInput value={form.heatStartDate} onChange={(v) => setForm({ ...form, heatStartDate: v })} placeholder="Heat start date *" maximumDate={new Date()} />
           <Select
             value={form.detectionMethod}
             onChange={(v) => setForm({ ...form, detectionMethod: v })}
