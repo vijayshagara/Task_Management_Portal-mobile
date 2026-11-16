@@ -14,8 +14,14 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
 import DateInput from '../../components/DateInput';
+import TimeInput from '../../components/TimeInput';
 import { formatDate, formatDateTime } from '../../utils/helpers';
 import { colors, spacing } from '../../theme';
+
+function nowTimeStr() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
 
 function todayStr() {
   const d = new Date();
@@ -29,7 +35,7 @@ export default function HeatCycleScreen({ route }) {
   const isAdmin = user?.role === 'admin';
   const [showForm, setShowForm] = useState(false);
   const cows = useSelector((s) => s.cows.items);
-  const emptyForm = { cowId: '', heatStartDate: todayStr(), detectionMethod: 'manual', notes: '' };
+  const emptyForm = { cowId: '', heatStartDate: todayStr(), heatStartTime: nowTimeStr(), detectionMethod: 'manual', notes: '' };
   const [form, setForm] = useState(emptyForm);
   const [filterCow, setFilterCow] = useState(route?.params?.cow || '');
   useEffect(() => {
@@ -65,10 +71,15 @@ export default function HeatCycleScreen({ route }) {
       return;
     }
     const [y, m, d] = form.heatStartDate.split('-').map(Number);
-    const now = new Date();
-    const start = new Date(y, m - 1, d, now.getHours(), now.getMinutes());
+    const [hh, mm] = (form.heatStartTime || nowTimeStr()).split(':').map(Number);
+    const start = new Date(y, m - 1, d, hh, mm);
+    if (start.getTime() > Date.now()) {
+      Alert.alert('Invalid time', 'Heat start cannot be in the future');
+      return;
+    }
     try {
-      await dispatch(addHeatCycle({ ...form, heatStartDate: start.toISOString() })).unwrap();
+      const { heatStartTime, ...rest } = form;
+      await dispatch(addHeatCycle({ ...rest, heatStartDate: start.toISOString() })).unwrap();
       setForm(emptyForm);
       setShowForm(false);
     } catch (err) {
@@ -114,6 +125,7 @@ export default function HeatCycleScreen({ route }) {
         <View style={styles.form}>
           <Select value={form.cowId} onChange={(v) => setForm({ ...form, cowId: v })} options={cowOptions} placeholder="Select cow *" />
           <DateInput value={form.heatStartDate} onChange={(v) => setForm({ ...form, heatStartDate: v })} placeholder="Heat start date *" maximumDate={new Date()} />
+          <TimeInput value={form.heatStartTime} onChange={(v) => setForm({ ...form, heatStartTime: v })} placeholder="Heat start time *" />
           <Select
             value={form.detectionMethod}
             onChange={(v) => setForm({ ...form, detectionMethod: v })}

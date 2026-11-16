@@ -10,6 +10,7 @@ import useMultiSelect from '../../hooks/useMultiSelect';
 import { confirmBulkDelete } from '../../utils/bulkActions';
 import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
+import PasswordInput from '../../components/PasswordInput';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
 import { colors, spacing } from '../../theme';
@@ -86,7 +87,7 @@ export default function UsersScreen() {
         <View style={styles.form}>
           <Input value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} placeholder="Name" />
           <Input value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} placeholder="Email" keyboardType="email-address" autoCapitalize="none" />
-          <Input value={form.password} onChangeText={(v) => setForm({ ...form, password: v })} placeholder="Password" secureTextEntry />
+          <PasswordInput value={form.password} onChangeText={(v) => setForm({ ...form, password: v })} placeholder="Password" />
           <Select value={form.role} onChange={(v) => setForm({ ...form, role: v })} options={[{ value: 'admin', label: 'Admin' }, { value: 'developer', label: 'Developer' }, { value: 'farmer', label: 'Farmer' }]} placeholder="Role" />
           <Button title="Create User" onPress={submit} />
         </View>

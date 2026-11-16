@@ -3,6 +3,7 @@ import { Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } f
 import { useDispatch, useSelector } from 'react-redux';
 import { login, clearAuthError } from './authSlice';
 import Input from '../../components/Input';
+import PasswordInput from '../../components/PasswordInput';
 import Button from '../../components/Button';
 import { SafeScreen } from '../../components/Screen';
 import { colors, spacing } from '../../theme';
@@ -28,7 +29,7 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.subtitle}>Sign in to your dairy farmer community</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Input value={email} onChangeText={setEmail} placeholder="Email" keyboardType="email-address" autoCapitalize="none" />
-        <Input value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry />
+        <PasswordInput value={password} onChangeText={setPassword} placeholder="Password" />
         <Button title={loading ? 'Signing in…' : 'Sign in'} onPress={submit} loading={loading} />
         <Button title="Forgot password?" variant="outline" onPress={() => navigation.navigate('ForgotPassword')} style={{ marginTop: spacing.sm }} />
         <Button title="Create account" variant="outline" onPress={() => navigation.navigate('Register')} style={{ marginTop: spacing.sm }} />

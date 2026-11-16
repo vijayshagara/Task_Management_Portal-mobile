@@ -3,6 +3,7 @@ import { Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } f
 import { useDispatch, useSelector } from 'react-redux';
 import { register, clearAuthError } from './authSlice';
 import Input from '../../components/Input';
+import PasswordInput from '../../components/PasswordInput';
 import Button from '../../components/Button';
 import { SafeScreen } from '../../components/Screen';
 import { colors, spacing } from '../../theme';
@@ -28,7 +29,7 @@ export default function RegisterScreen({ navigation }) {
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <Input value={form.name} onChangeText={(v) => set('name', v)} placeholder="Full name" />
           <Input value={form.email} onChangeText={(v) => set('email', v)} placeholder="Email" keyboardType="email-address" autoCapitalize="none" />
-          <Input value={form.password} onChangeText={(v) => set('password', v)} placeholder="Password" secureTextEntry />
+          <PasswordInput value={form.password} onChangeText={(v) => set('password', v)} placeholder="Password" />
           <Button title={loading ? 'Creating…' : 'Register'} onPress={submit} loading={loading} />
           <Button title="Back to login" variant="outline" onPress={() => navigation.goBack()} style={{ marginTop: spacing.sm }} />
         </ScrollView>

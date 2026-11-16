@@ -5,6 +5,7 @@ import { api } from '../../api/client';
 import Screen from '../../components/Screen';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
+import PasswordInput from '../../components/PasswordInput';
 import { logoutAndClear } from '../auth/authSlice';
 import { colors, spacing } from '../../theme';
 
@@ -74,8 +75,8 @@ export default function SettingsScreen({ navigation }) {
         ))}
         <Button title="Save Settings" onPress={save} style={{ marginTop: spacing.lg }} />
         <Text style={[styles.section, { marginTop: spacing.lg }]}>Change Password</Text>
-        <Input value={passwordForm.currentPassword} onChangeText={(v) => setPasswordForm({ ...passwordForm, currentPassword: v })} placeholder="Current password" secureTextEntry />
-        <Input value={passwordForm.newPassword} onChangeText={(v) => setPasswordForm({ ...passwordForm, newPassword: v })} placeholder="New password (min 6 chars)" secureTextEntry />
+        <PasswordInput value={passwordForm.currentPassword} onChangeText={(v) => setPasswordForm({ ...passwordForm, currentPassword: v })} placeholder="Current password" />
+        <PasswordInput value={passwordForm.newPassword} onChangeText={(v) => setPasswordForm({ ...passwordForm, newPassword: v })} placeholder="New password (min 6 chars)" />
         <Button title="Update Password" variant="outline" onPress={changePassword} />
         <Button title="My Profile" variant="outline" onPress={() => navigation.navigate('Profile')} style={{ marginTop: spacing.sm }} />
         <Button title="Log out" variant="outline" onPress={() => dispatch(logoutAndClear())} style={{ marginTop: spacing.sm, borderColor: colors.danger }} />

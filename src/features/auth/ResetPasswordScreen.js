@@ -3,6 +3,7 @@ import { Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } f
 import { api } from '../../api/client';
 import { getErrorMessage } from '../../utils/helpers';
 import Input from '../../components/Input';
+import PasswordInput from '../../components/PasswordInput';
 import Button from '../../components/Button';
 import { SafeScreen } from '../../components/Screen';
 import { colors, spacing } from '../../theme';
@@ -36,7 +37,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
           <Text style={styles.title}>Reset password</Text>
           <Text style={styles.subtitle}>Paste the token from your reset email.</Text>
           <Input value={token} onChangeText={setToken} placeholder="Reset token" autoCapitalize="none" autoCorrect={false} />
-          <Input value={password} onChangeText={setPassword} placeholder="New password (min 6 chars)" secureTextEntry />
+          <PasswordInput value={password} onChangeText={setPassword} placeholder="New password (min 6 chars)" />
           <Button title="Reset password" onPress={submit} loading={loading} />
           <Button title="Back to login" variant="outline" onPress={() => navigation.navigate('Login')} style={{ marginTop: spacing.sm }} />
         </ScrollView>
