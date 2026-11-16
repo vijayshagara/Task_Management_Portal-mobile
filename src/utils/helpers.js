@@ -1,8 +1,5 @@
-export const DEFAULT_COW_IMAGE =
-  'https://images.unsplash.com/photo-1546445317-29f4545c9d0c?w=400&h=300&fit=crop';
-
 export function getCowImageUrl(cow) {
-  if (!cow?.image) return DEFAULT_COW_IMAGE;
+  if (!cow?.image) return null;
   const base = (process.env.EXPO_PUBLIC_API_URL || 'https://task-management-portal-be.vercel.app/api').replace(/\/$/, '');
   return `${base}/cows/${cow.id}/image`;
 }
@@ -27,8 +24,19 @@ export function formatDateTime(value) {
   });
 }
 
+export const NETWORK_ERROR = 'Cannot reach the server. Check your internet connection and try again.';
+export const TIMEOUT_ERROR = 'The server took too long to respond. Please try again.';
+
 export function getErrorMessage(error, fallback = 'Something went wrong') {
-  return error?.response?.data?.message || error?.message || fallback;
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.code === 'ECONNABORTED') return TIMEOUT_ERROR;
+  if (error?.request && !error?.response) return NETWORK_ERROR;
+  return error?.message || fallback;
+}
+
+/** True when a thunk rejection (string message) means the device is offline / server unreachable. */
+export function isOfflineError(err) {
+  return err === NETWORK_ERROR || err === TIMEOUT_ERROR;
 }
 
 export function titleCase(value) {

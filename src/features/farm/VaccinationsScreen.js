@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import Select from '../../components/Select';
+import DateInput from '../../components/DateInput';
 import LoadingView from '../../components/LoadingView';
 import RefreshableScrollView from '../../components/RefreshableScrollView';
 import BulkActionBar, { SelectCheckbox } from '../../components/BulkActionBar';
@@ -22,7 +24,7 @@ export default function VaccinationsScreen() {
   const { vaccinations, loading } = useSelector((s) => s.farm);
   const cows = useSelector((s) => s.cows.items);
   const selection = useMultiSelect(vaccinations);
-  const [form, setForm] = useState({ cowId: '', vaccineName: '', scheduledDate: '' });
+  const [form, setForm] = useState({ cowId: '', vaccineName: '', scheduledDate: '', vetName: '' });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -37,8 +39,16 @@ export default function VaccinationsScreen() {
   const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
-    await dispatch(createVaccination(form));
-    setForm({ cowId: '', vaccineName: '', scheduledDate: '' });
+    if (!form.cowId || !form.vaccineName.trim() || !form.scheduledDate) {
+      Alert.alert('Missing fields', 'Select a cow, enter the vaccine name and pick a date');
+      return;
+    }
+    try {
+      await dispatch(createVaccination(form)).unwrap();
+      setForm({ cowId: '', vaccineName: '', scheduledDate: '', vetName: '' });
+    } catch (err) {
+      Alert.alert('Error', String(err));
+    }
   };
 
   const markComplete = (id) => {
@@ -102,9 +112,10 @@ export default function VaccinationsScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
       >
-        <Input value={form.cowId} onChangeText={(v) => set('cowId', v)} placeholder="Cow ID *" />
+        <Select value={form.cowId} onChange={(v) => set('cowId', v)} options={cows.map((c) => ({ value: c.id, label: c.name }))} placeholder="Select cow *" />
         <Input value={form.vaccineName} onChangeText={(v) => set('vaccineName', v)} placeholder="Vaccine name *" />
-        <Input value={form.scheduledDate} onChangeText={(v) => set('scheduledDate', v)} placeholder="Date (YYYY-MM-DD)" />
+        <DateInput value={form.scheduledDate} onChange={(v) => set('scheduledDate', v)} placeholder="Scheduled date *" />
+        <Input value={form.vetName} onChangeText={(v) => set('vetName', v)} placeholder="Vet name (optional)" />
         <Button title="Schedule" onPress={submit} />
         {vaccinations.map((v) => (
           <View key={v.id} style={[styles.card, selection.isSelected(v.id) && styles.selected]}>

@@ -13,7 +13,8 @@ import useRefresh from '../../hooks/useRefresh';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
-import { formatDateTime } from '../../utils/helpers';
+import { formatDateTime, isOfflineError } from '../../utils/helpers';
+import { enqueueOfflineAction } from '../../utils/offlineQueue';
 import { colors, spacing } from '../../theme';
 
 export default function HealthScreen({ route }) {
@@ -53,11 +54,19 @@ export default function HealthScreen({ route }) {
       Alert.alert('Missing cow', 'Please select a cow');
       return;
     }
+    const payload = { ...form, temperature: form.temperature ? Number(form.temperature) : null };
     try {
-      await dispatch(addHealth({ ...form, temperature: form.temperature ? Number(form.temperature) : null })).unwrap();
+      await dispatch(addHealth(payload)).unwrap();
       setShowForm(false);
       setForm(emptyForm);
     } catch (err) {
+      if (isOfflineError(err)) {
+        await enqueueOfflineAction({ type: 'health', payload });
+        setShowForm(false);
+        setForm(emptyForm);
+        Alert.alert('Offline', 'Saved on this phone — it will sync when you are back online');
+        return;
+      }
       Alert.alert('Error', String(err));
     }
   };

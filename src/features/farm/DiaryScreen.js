@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert, Switch } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import Select from '../../components/Select';
+import DateInput from '../../components/DateInput';
 import LoadingView from '../../components/LoadingView';
 import RefreshableScrollView from '../../components/RefreshableScrollView';
 import BulkActionBar, { SelectCheckbox } from '../../components/BulkActionBar';
@@ -14,6 +16,7 @@ import { fetchDiary, createDiary, deleteDiary, bulkDeleteDiary } from './farmSli
 import { fetchCows } from '../cows/cowSlice';
 import { colors, spacing } from '../../theme';
 import { enqueueOfflineAction } from '../../utils/offlineQueue';
+import { isOfflineError } from '../../utils/helpers';
 
 export default function DiaryScreen() {
   const dispatch = useDispatch();
@@ -21,7 +24,7 @@ export default function DiaryScreen() {
   const cows = useSelector((s) => s.cows.items);
   const selection = useMultiSelect(diary);
   const [form, setForm] = useState({
-    entryDate: new Date().toISOString().split('T')[0], content: '', weather: '', feedNotes: '', cowId: '',
+    entryDate: new Date().toISOString().split('T')[0], content: '', weather: '', feedNotes: '', cowId: '', shareToFeed: false,
   });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -37,13 +40,21 @@ export default function DiaryScreen() {
   const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
+    if (!form.content.trim()) {
+      Alert.alert('Missing entry', 'Write something for the diary entry');
+      return;
+    }
     const payload = { ...form, cowId: form.cowId || null };
     try {
       await dispatch(createDiary(payload)).unwrap();
-      setForm({ entryDate: new Date().toISOString().split('T')[0], content: '', weather: '', feedNotes: '', cowId: '' });
-    } catch {
-      await enqueueOfflineAction({ type: 'diary', payload });
-      Alert.alert('Offline', 'Saved locally — will sync when online');
+      setForm({ entryDate: new Date().toISOString().split('T')[0], content: '', weather: '', feedNotes: '', cowId: '', shareToFeed: false });
+    } catch (err) {
+      if (isOfflineError(err)) {
+        await enqueueOfflineAction({ type: 'diary', payload });
+        Alert.alert('Offline', 'Saved on this phone — it will sync when you are back online');
+      } else {
+        Alert.alert('Error', String(err));
+      }
     }
   };
 
@@ -88,11 +99,15 @@ export default function DiaryScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
       >
-        <Input value={form.entryDate} onChangeText={(v) => set('entryDate', v)} placeholder="Date (YYYY-MM-DD)" />
+        <DateInput value={form.entryDate} onChange={(v) => set('entryDate', v)} placeholder="Date" maximumDate={new Date()} />
         <Input value={form.weather} onChangeText={(v) => set('weather', v)} placeholder="Weather" />
         <Input value={form.feedNotes} onChangeText={(v) => set('feedNotes', v)} placeholder="Feed notes" />
-        <Input value={form.cowId} onChangeText={(v) => set('cowId', v)} placeholder="Cow ID (optional)" />
+        <Select value={form.cowId} onChange={(v) => set('cowId', v)} options={[{ value: '', label: '— Herd general —' }, ...cows.map((c) => ({ value: c.id, label: c.name }))]} placeholder="— Herd general —" />
         <Input value={form.content} onChangeText={(v) => set('content', v)} placeholder="Diary entry *" multiline />
+        <View style={styles.switchRow}>
+          <Text style={{ color: colors.text }}>Share to farm feed</Text>
+          <Switch value={form.shareToFeed} onValueChange={(v) => set('shareToFeed', v)} trackColor={{ true: colors.primary }} />
+        </View>
         <Button title="Save Entry" onPress={submit} />
 
         {diary.map((entry) => (
@@ -123,6 +138,7 @@ export default function DiaryScreen() {
 }
 
 const styles = StyleSheet.create({
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm, paddingHorizontal: 4 },
   card: { backgroundColor: colors.card, padding: spacing.md, borderRadius: 8, marginTop: spacing.md, borderWidth: 1, borderColor: colors.border },
   selected: { backgroundColor: colors.primaryLight },
   row: { flexDirection: 'row', alignItems: 'flex-start' },

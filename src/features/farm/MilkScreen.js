@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import Select from '../../components/Select';
+import DateInput from '../../components/DateInput';
 import LoadingView from '../../components/LoadingView';
 import RefreshableScrollView from '../../components/RefreshableScrollView';
 import BulkActionBar, { SelectCheckbox } from '../../components/BulkActionBar';
@@ -14,15 +16,18 @@ import {
   fetchMilk, createMilk, fetchMilkTrends, deleteMilk, bulkDeleteMilk,
   fetchCollections, createCollection, deleteCollection, bulkDeleteCollections,
 } from './farmSlice';
+import { fetchCows } from '../cows/cowSlice';
 import { colors, spacing } from '../../theme';
 import { enqueueOfflineAction } from '../../utils/offlineQueue';
+import { isOfflineError } from '../../utils/helpers';
 
 export default function MilkScreen() {
   const dispatch = useDispatch();
   const { milk, milkTrends, collections, loading } = useSelector((s) => s.farm);
+  const cows = useSelector((s) => s.cows.items);
   const [tab, setTab] = useState('production');
   const [form, setForm] = useState({
-    recordDate: new Date().toISOString().split('T')[0], session: 'morning', liters: '', cowId: '',
+    recordDate: new Date().toISOString().split('T')[0], session: 'morning', liters: '', fatPercent: '', cowId: '',
   });
   const [collForm, setCollForm] = useState({
     collectionDate: new Date().toISOString().split('T')[0], totalLiters: '', fatPercent: '', ratePerLiter: '', cooperativeName: '',
@@ -36,6 +41,7 @@ export default function MilkScreen() {
     dispatch(fetchMilk());
     dispatch(fetchMilkTrends(14));
     dispatch(fetchCollections());
+    dispatch(fetchCows());
   }, [dispatch]);
 
   const load = useCallback(
@@ -43,20 +49,35 @@ export default function MilkScreen() {
       dispatch(fetchMilk()).unwrap(),
       dispatch(fetchMilkTrends(14)).unwrap(),
       dispatch(fetchCollections()).unwrap(),
+      dispatch(fetchCows()).unwrap(),
     ]),
     [dispatch],
   );
   const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
-    const payload = { ...form, liters: parseFloat(form.liters), cowId: form.cowId || null };
+    const liters = parseFloat(form.liters);
+    if (!Number.isFinite(liters) || liters <= 0) {
+      Alert.alert('Invalid liters', 'Enter how many liters were milked');
+      return;
+    }
+    const payload = {
+      ...form,
+      liters,
+      fatPercent: form.fatPercent ? parseFloat(form.fatPercent) : null,
+      cowId: form.cowId || null,
+    };
     try {
       await dispatch(createMilk(payload)).unwrap();
-      setForm({ recordDate: new Date().toISOString().split('T')[0], session: 'morning', liters: '', cowId: '' });
+      setForm({ recordDate: new Date().toISOString().split('T')[0], session: 'morning', liters: '', fatPercent: '', cowId: '' });
       dispatch(fetchMilkTrends(14));
-    } catch {
-      await enqueueOfflineAction({ type: 'milk', payload });
-      Alert.alert('Offline', 'Saved locally — will sync when online');
+    } catch (err) {
+      if (isOfflineError(err)) {
+        await enqueueOfflineAction({ type: 'milk', payload });
+        Alert.alert('Offline', 'Saved on this phone — it will sync when you are back online');
+      } else {
+        Alert.alert('Error', String(err));
+      }
     }
   };
 
@@ -150,10 +171,11 @@ export default function MilkScreen() {
       >
         {tab === 'production' && (
           <>
-            <Input value={form.recordDate} onChangeText={(v) => set('recordDate', v)} placeholder="Date" />
-            <Input value={form.session} onChangeText={(v) => set('session', v)} placeholder="Session (morning/evening)" />
-            <Input value={form.liters} onChangeText={(v) => set('liters', v)} placeholder="Liters" keyboardType="decimal-pad" />
-            <Input value={form.cowId} onChangeText={(v) => set('cowId', v)} placeholder="Cow ID (optional)" />
+            <DateInput value={form.recordDate} onChange={(v) => set('recordDate', v)} placeholder="Date" maximumDate={new Date()} />
+            <Select value={form.session} onChange={(v) => set('session', v)} options={[{ value: 'morning', label: 'Morning' }, { value: 'evening', label: 'Evening' }]} placeholder="Session" />
+            <Input value={form.liters} onChangeText={(v) => set('liters', v)} placeholder="Liters *" keyboardType="decimal-pad" />
+            <Input value={form.fatPercent} onChangeText={(v) => set('fatPercent', v)} placeholder="Fat % (optional)" keyboardType="decimal-pad" />
+            <Select value={form.cowId} onChange={(v) => set('cowId', v)} options={[{ value: '', label: 'Herd total' }, ...cows.map((c) => ({ value: c.id, label: c.name }))]} placeholder="Herd total" />
             <Button title="Log Milk" onPress={submit} />
 
             {milkTrends.length > 0 && (
@@ -190,7 +212,7 @@ export default function MilkScreen() {
 
         {tab === 'collections' && (
           <>
-            <Input value={collForm.collectionDate} onChangeText={(v) => setColl('collectionDate', v)} placeholder="Date" />
+            <DateInput value={collForm.collectionDate} onChange={(v) => setColl('collectionDate', v)} placeholder="Collection date" maximumDate={new Date()} />
             <Input value={collForm.totalLiters} onChangeText={(v) => setColl('totalLiters', v)} placeholder="Total liters" keyboardType="decimal-pad" />
             <Input value={collForm.fatPercent} onChangeText={(v) => setColl('fatPercent', v)} placeholder="Fat %" keyboardType="decimal-pad" />
             <Input value={collForm.ratePerLiter} onChangeText={(v) => setColl('ratePerLiter', v)} placeholder="Rate per liter" keyboardType="decimal-pad" />

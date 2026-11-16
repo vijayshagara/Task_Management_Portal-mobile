@@ -6,6 +6,9 @@ import { Provider, useDispatch } from 'react-redux';
 import { store } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
 import LoadingView from './src/components/LoadingView';
+import GlobalLoader from './src/components/GlobalLoader';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import OfflineBanner from './src/components/OfflineBanner';
 import { loadAuth } from './src/store/authStorage';
 import { setAuthSession, finishBootstrap } from './src/features/auth/authSlice';
 import { syncOfflineQueue } from './src/utils/offlineQueue';
@@ -33,6 +36,11 @@ function Bootstrap({ children }) {
   return children;
 }
 
+function OfflineBannerGate() {
+  const token = useSelector((s) => s.auth.token);
+  return <OfflineBanner enabled={!!token} />;
+}
+
 export default function App() {
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -43,13 +51,17 @@ export default function App() {
   }, []);
 
   return (
+    <ErrorBoundary>
     <Provider store={store}>
       <SafeAreaProvider>
         <Bootstrap>
           <RootNavigator />
         </Bootstrap>
+        <OfflineBannerGate />
+        <GlobalLoader />
         <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       </SafeAreaProvider>
     </Provider>
+    </ErrorBoundary>
   );
 }

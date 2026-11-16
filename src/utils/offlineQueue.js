@@ -17,10 +17,11 @@ export async function enqueueOfflineAction(action) {
 
 export async function syncOfflineQueue() {
   const queue = await getOfflineQueue();
-  if (!queue.length) return { synced: 0, failed: 0 };
+  if (!queue.length) return { synced: 0, failed: 0, dropped: 0 };
 
   const remaining = [];
   let synced = 0;
+  let dropped = 0;
 
   for (const item of queue) {
     try {
@@ -29,11 +30,14 @@ export async function syncOfflineQueue() {
       else if (item.type === 'diary') await api.post('/farm/diary', item.payload);
       else continue;
       synced += 1;
-    } catch {
-      remaining.push(item);
+    } catch (err) {
+      const status = err?.response?.status;
+      // Server rejected the data itself (validation etc.) — retrying will never work, so drop it.
+      if (status && status >= 400 && status < 500 && ![401, 408, 429].includes(status)) dropped += 1;
+      else remaining.push(item);
     }
   }
 
   await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
-  return { synced, failed: remaining.length };
+  return { synced, failed: remaining.length, dropped };
 }

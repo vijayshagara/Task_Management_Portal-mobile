@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { Image, View, Text, StyleSheet } from 'react-native';
 import { getCowImageUrl } from '../utils/helpers';
 import { colors } from '../theme';
 
 export default function CowImage({ cow, size = 44, large = false, style }) {
+  const [failed, setFailed] = useState(false);
   const frame = large
     ? styles.large
     : { width: size, height: size, borderRadius: size / 2 };
 
-  if (!cow?.image) {
+  if (!cow?.image || failed) {
     return (
       <View style={[styles.placeholder, frame, style]}>
         <Text style={{ fontSize: large ? 48 : size * 0.45 }}>🐄</Text>
@@ -20,6 +22,7 @@ export default function CowImage({ cow, size = 44, large = false, style }) {
       source={{ uri: getCowImageUrl(cow) }}
       style={[frame, style]}
       resizeMode="cover"
+      onError={() => setFailed(true)}
     />
   );
 }

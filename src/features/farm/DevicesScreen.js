@@ -4,30 +4,43 @@ import { useDispatch, useSelector } from 'react-redux';
 import Screen from '../../components/Screen';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import Select from '../../components/Select';
 import LoadingView from '../../components/LoadingView';
 import RefreshableScrollView from '../../components/RefreshableScrollView';
 import BulkActionBar, { SelectCheckbox } from '../../components/BulkActionBar';
 import useMultiSelect from '../../hooks/useMultiSelect';
 import useRefresh from '../../hooks/useRefresh';
 import { fetchDevices, createDevice, revokeDevice, bulkRevokeDevices } from './farmSlice';
+import { fetchCows } from '../cows/cowSlice';
 import { colors, spacing } from '../../theme';
 
 export default function DevicesScreen() {
   const dispatch = useDispatch();
   const { devices, loading } = useSelector((s) => s.farm);
+  const cows = useSelector((s) => s.cows.items);
   const [form, setForm] = useState({ deviceName: '', cowId: '' });
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const activeDevices = useMemo(() => devices.filter((d) => d.isActive), [devices]);
   const selection = useMultiSelect(activeDevices);
 
-  useEffect(() => { dispatch(fetchDevices()); }, [dispatch]);
+  useEffect(() => {
+    dispatch(fetchDevices());
+    dispatch(fetchCows());
+  }, [dispatch]);
 
-  const load = useCallback(() => dispatch(fetchDevices()).unwrap(), [dispatch]);
+  const load = useCallback(
+    () => Promise.all([dispatch(fetchDevices()).unwrap(), dispatch(fetchCows()).unwrap()]),
+    [dispatch],
+  );
   const { refreshing, onRefresh } = useRefresh(load);
 
   const submit = async () => {
+    if (!form.deviceName.trim()) {
+      Alert.alert('Missing name', 'Enter a device name');
+      return;
+    }
     try {
-      const device = await dispatch(createDevice(form)).unwrap();
+      const device = await dispatch(createDevice({ ...form, cowId: form.cowId || null })).unwrap();
       Alert.alert('API Key Created', device.apiKey);
       setForm({ deviceName: '', cowId: '' });
     } catch (err) {
@@ -100,7 +113,7 @@ export default function DevicesScreen() {
         onRefresh={onRefresh}
       >
         <Input value={form.deviceName} onChangeText={(v) => set('deviceName', v)} placeholder="Device name" />
-        <Input value={form.cowId} onChangeText={(v) => set('cowId', v)} placeholder="Cow ID (optional)" />
+        <Select value={form.cowId} onChange={(v) => set('cowId', v)} options={[{ value: '', label: 'None' }, ...cows.map((c) => ({ value: c.id, label: c.name }))]} placeholder="Link to a cow (optional)" />
         <Button title="Generate Key" onPress={submit} />
         {devices.map((d) => (
           <View key={d.id} style={[styles.card, selection.isSelected(d.id) && styles.selected]}>
